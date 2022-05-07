@@ -12,9 +12,11 @@
 ##  example
 - 登录统一身份认证后获取健康打卡页面
 
-`import zjuam
+```python
+import zjuam
 username = '3000000000'
 password = '123456789'
 login1 = zjuam.login(username, password)
 content=login1.session.get('https://healthreport.zju.edu.cn/ncov/wap/default/index')
-print(content)`
+print(content)
+```

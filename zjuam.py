@@ -1,32 +1,32 @@
 import requests
-from jscode import jscode
-import execjs
+from urllib.parse import quote
 import re
-from bs4 import BeautifulSoup
 
-
-def printhtml(content, n):
-    with open(f"temp{n}.html", mode="w") as f:
-        f.write(content)
+def rsa_encrypt(passwd:str, e_hex:str, n_hex:str):
+    pwd = 0
+    for c in passwd:
+        pwd = pwd * 256 + ord(c)
+    n = int(n_hex, 16)
+    e = int(e_hex,16)
+    crypt = pow(pwd,e,n)
+    ciphertext_hex = hex(crypt)[2:]
+    return ciphertext_hex
 
 
 class login:
-    def __init__(self, username, password):
-        url = 'https://zjuam.zju.edu.cn/cas/login'
-        get_pubkey_url = 'https://zjuam.zju.edu.cn/cas/v2/getPubKey'
+    def __init__(self, username:str, password:str,service:str):
+        url = 'https://zjuam.zju.edu.cn/cas/login?service='+quote(service)
+        pubkey_url = 'https://zjuam.zju.edu.cn/cas/v2/getPubKey'
         self.session = requests.session()
-        res1 = self.session.get(url)
-        soup = BeautifulSoup(res1.text, "html.parser")
-        execution = soup.find("input", attrs={'name': 'execution'})['value']
-        pubkey = self.session.get(get_pubkey_url)
+        res = self.session.get(url)
+        execution = re.findall(r"(?<=name=\"execution\" value=\").*(?=\")",res.text)[0]
+        pubkey = self.session.get(pubkey_url)
         modulus = pubkey.json()["modulus"]
         exponent = pubkey.json()["exponent"]
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
         }
-
-        ctx = execjs.compile(jscode)
-        encrypted_password = ctx.call('encrypt', modulus, exponent, password)
+        encrypted_password = rsa_encrypt(password, exponent, modulus)
 
         data = {
             'username': username,
